@@ -35,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     private static MainActivity inst;
     static boolean active = false;
     private static final int READ_SMS_PERMISSIONS_REQUEST = 1;
-    private static final int READ_CONTACTS_PERMISSIONS_REQUEST = 1;
 
     public static MainActivity instance() {
         return inst;
@@ -63,9 +62,6 @@ public class MainActivity extends AppCompatActivity {
         input = (EditText) findViewById(R.id.input);
         arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, smsMessagesList);
         messages.setAdapter(arrayAdapter);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            getPermissionToGetContact();
-        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             getPermissionToReadSMS();
         } else {
@@ -78,16 +74,16 @@ public class MainActivity extends AppCompatActivity {
         Cursor smsInboxCursor = contentResolver.query(Uri.parse("content://sms/inbox"), null, null, null, null);
 
         int indexBody = smsInboxCursor.getColumnIndex("body");
-        int indexAddress = smsInboxCursor.getColumnIndex("address");
 
+        int indexAddress = smsInboxCursor.getColumnIndex("address");
         if (indexBody < 0 || !smsInboxCursor.moveToFirst()) return;
         arrayAdapter.clear();
         do {
-            String str = "SMS de la part de " + getContactName(this, smsInboxCursor.getString(indexAddress)) + "\n" + smsInboxCursor.getString(indexBody) + "\n";
-            //    if (smsInboxCursor.getString(indexAddress).equals("0629134218")) {
+            String str = "SMS de la part de " + smsInboxCursor.getString(indexAddress) + "\n" + smsInboxCursor.getString(indexBody) + "\n";
             arrayAdapter.add(str);
-            //  }
         } while (smsInboxCursor.moveToNext());
+
+        smsInboxCursor.close();
     }
 
     public void updateInbox(final String smsMessage) {
@@ -118,34 +114,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void getPermissionToGetContact() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) {
-                    Toast.makeText(this, "L'application n'as pas accès aux contacts", Toast.LENGTH_SHORT).show();
-                }
-                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, READ_CONTACTS_PERMISSIONS_REQUEST);
-            }
-        }
-    }
-
-
-    public static String getContactName(Context context, String phoneNo) {
-        ContentResolver cr = context.getContentResolver();
-        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNo));
-        Cursor cursor = cr.query(uri, new String[]{ContactsContract.PhoneLookup.DISPLAY_NAME}, null, null, null);
-        if (cursor == null) {
-            return phoneNo;
-        }
-        String Name = phoneNo;
-        if (cursor.moveToFirst()) {
-            Name = cursor.getString(cursor.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME));
-        }
-        if (cursor != null && cursor.isClosed()) {
-            cursor.close();
-        }
-        return Name;
-    }
 
 
     @Override
@@ -160,18 +128,5 @@ public class MainActivity extends AppCompatActivity {
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
-        if (requestCode == READ_CONTACTS_PERMISSIONS_REQUEST) {
-            if (grantResults.length == 1 &&
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission (Contacts) accordée", Toast.LENGTH_SHORT).show();
-                refreshSmsInbox();
-            } else {
-                Toast.makeText(this, "Permission (Contact) non accordée", Toast.LENGTH_SHORT).show();
-            }
-
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-
     }
 }
