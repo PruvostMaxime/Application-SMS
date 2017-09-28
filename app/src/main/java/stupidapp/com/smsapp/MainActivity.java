@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
             getPermissionToReadSMS();
         } else {
-            smsManager.sendTextMessage("0782972827", null, input.getText().toString(), null, null);
+            smsManager.sendTextMessage("<numero>", null, input.getText().toString(), null, null);
             Toast.makeText(this, "Message envoyé", Toast.LENGTH_SHORT).show();
         }
 
